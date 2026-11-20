@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BS &amp; P&amp;L Statement Generator — Indian Accounting Tool</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* Base Font & Scrollbar Styling */
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* ==================== A4 DOCUMENT PREVIEW STYLING ==================== */
+    .preview-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 24px 16px 48px 16px;
+    }
+
+    .a4-page {
+      width: 210mm;
+      min-height: 297mm;
+      height: 297mm;
+      background: #ffffff;
+      color: #0f172a;
+      padding: 18mm 18mm 12mm 18mm;
+      box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(15, 23, 42, 0.08);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', 'Inter', Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      transform-origin: top center;
+    }
+
+    .a4-content {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .doc-header {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .doc-firm-name {
+      margin: 0;
+      font-size: 15.5pt;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      color: #0f172a;
+    }
+
+    .doc-stmt-title {
+      margin: 4px 0 0 0;
+      font-size: 11pt;
+      font-weight: 700;
+      letter-spacing: 0.25px;
+      text-transform: uppercase;
+      color: #1e293b;
+    }
+
+    /* Classic Simple Grid Accounting Table */
+    .fin-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 9.8pt;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .fin-table th,
+    .fin-table td {
+      border: 1px solid #1e293b;
+      padding: 6px 8px;
+      vertical-align: top;
+      overflow-wrap: break-word;
+    }
+
+    .fin-table thead th {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      font-weight: 700;
+      text-align: left;
+      text-transform: uppercase;
+      font-size: 9.5pt;
+      border-bottom: 1.5px solid #0f172a;
+    }
+
+    .fin-table thead th.amt-col {
+      text-align: right;
+    }
+
+    .col-part { width: 35%; }
+    .col-amt  { width: 15%; }
+
+    .amt-cell {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .group-title {
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #0f172a;
+      font-size: 9.2pt;
+    }
+
+    .cap-detail {
+      font-size: 9.2pt;
+      line-height: 1.55;
+      color: #1e293b;
+    }
+
+    .cap-amt {
+      vertical-align: bottom !important;
+      font-weight: 600;
+    }
+
+    .total-row td {
+      font-weight: 700;
+      background-color: #f1f5f9;
+      border-top: 1.5px solid #0f172a;
+      border-bottom: 1.5px solid #0f172a;
+      color: #0f172a;
+      text-transform: uppercase;
+    }
+
+    .doc-notes {
+      margin-top: 14px;
+      font-size: 9pt;
+      line-height: 1.5;
+      color: #334155;
+      font-style: italic;
+    }
+
+    .doc-notes p {
+      margin: 0 0 3px 0;
+    }
+
+    .sig-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 26px;
+      font-size: 9.8pt;
+    }
+
+    .sig-table td {
+      border: none;
+      padding: 4px 0;
+      vertical-align: bottom;
+    }
+
+    .sig-right {
+      text-align: right;
+    }
+
+    .sig-space {
+      height: 36px;
+    }
+
+    .a4-footer {
+      flex-shrink: 0;
+      margin-top: auto;
+      padding-top: 4mm;
+      border-top: 1px solid #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8.5pt;
+      color: #475569;
+    }
+
+    /* Responsive scaling for A4 preview on smaller screens */
+    @media screen and (max-width: 900px) {
+      .a4-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .a4-page {
+        margin: 0 auto;
+      }
+    }
+
+    /* ==================== PRINT / PDF PERFECT CSS ==================== */
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        box-shadow: none !important;
+      }
+
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        width: 210mm !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      #workspace {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+
+      #previewPane {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #ffffff !important;
+      }
+
+      .preview-stage {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        gap: 0 !important;
+      }
+
+      .a4-wrapper {
+        display: block !important;
+        overflow: visible !important;
+        width: 210mm !important;
+      }
+
+      .a4-page {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        margin: 0 !important;
+        padding: 18mm 18mm 12mm 18mm !important;
+        border: none !important;
+        box-shadow: none !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        transform: none !important;
+      }
+
+      .a4-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+    }
+  </style>
+<script src="/_aistudio-iframe.js?v=29045eb3"></script></head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+  <!-- ==================== TOP TOOLBAR ==================== -->
+  <header class="no-print bg-slate-900 text-white border-b border-slate-800 px-3 sm:px-5 py-2.5 flex flex-wrap items-center justify-between gap-2 z-20 shrink-0">
+    <!-- Left: Brand & Collapse Toggle -->
+    <div class="flex items-center gap-2.5">
+      <button id="btnToggleSidebar" type="button" title="Toggle Data Entry Panel"
+        class="hidden lg:inline-flex items-center justify-center p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h10" />
+        </svg>
+      </button>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center font-bold text-sm shadow">
+          BS
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-base font-bold leading-tight tracking-tight">BS &amp; P&amp;L Generator</h1>
+          <p class="text-[11px] text-slate-400 hidden sm:block">Indian Accounting &amp; ITR-4 / 44AD 2-Page PDF Tool</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: Live Tally Badge & Ratios -->
+    <div class="flex flex-wrap items-center gap-2 text-xs">
+      <span id="tallyBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        TALLIED
+      </span>
+      <div class="hidden xl:flex items-center gap-1.5 bg-slate-800/90 px-2.5 py-1 rounded-lg border border-slate-700 text-slate-300">
+        <span>GP: <strong id="ratioGP" class="text-white">0.00%</strong></span>
+        <span class="text-slate-600">|</span>
+        <span>NP: <strong id="ratioNP" class="text-white">0.00%</strong></span>
+        <span class="text-slate-600">|</span>
+        <span>CR: <strong id="ratioCR" class="text-white">0.00</strong></span>
+      </div>
+    </div>
+
+    <!-- Right: Action Buttons -->
+    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+      <button id="btnOpenCarryForward" type="button"
+        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+        <span>Next Year</span>
+      </button>
+
+      <button id="btnSaveJson" type="button" title="Save Client Data (.json)"
+        class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        <span class="hidden sm:inline">Save</span>
+      </button>
+
+      <button id="btnLoadJson" type="button" title="Load Client Data (.json)"
+        class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg>
+        <span class="hidden sm:inline">Load</span>
+      </button>
+      <input id="fileInputJson" type="file" accept=".json,application/json" class="hidden" />
+
+      <button id="btnResetSample" type="button" title="Load Sample Data"
+        class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+        <span>Sample</span>
+      </button>
+
+      <button id="btnPrintPdf" type="button"
+        class="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        </svg>
+        <span>Print / Save PDF</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile View Switcher (Editor vs Preview) -->
+  <div class="no-print lg:hidden bg-white border-b border-slate-200 px-3 py-2 flex items-center justify-between gap-2 shrink-0">
+    <div class="flex bg-slate-100 p-1 rounded-lg w-full">
+      <button id="btnMobileEditor" type="button"
+        class="flex-1 py-1.5 text-xs font-semibold rounded-md bg-white text-indigo-700 shadow-sm transition">
+        Data Entry
+      </button>
+      <button id="btnMobilePreview" type="button"
+        class="flex-1 py-1.5 text-xs font-semibold rounded-md text-slate-600 transition">
+        Live 2-Page Preview
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN SPLIT-SCREEN WORKSPACE ==================== -->
+  <div id="workspace" class="flex-1 flex overflow-hidden">
+
+    <!-- ==================== LEFT PANEL: DATA ENTRY ==================== -->
+    <aside id="editorPane" class="no-print w-full lg:w-[460px] xl:w-[500px] bg-white border-r border-slate-200 flex flex-col shrink-0 h-full overflow-hidden">
+
+      <!-- Tab Navigation -->
+      <nav class="grid grid-cols-3 border-b border-slate-200 bg-slate-50 p-1.5 gap-1 shrink-0">
+        <button data-tab="firm" type="button"
+          class="tab-btn py-2 px-2 rounded-lg text-xs font-semibold transition bg-white text-indigo-700 shadow-sm border border-slate-200">
+          1. Firm Details
+        </button>
+        <button data-tab="pl" type="button"
+          class="tab-btn py-2 px-2 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900">
+          2. Trading &amp; P&amp;L
+        </button>
+        <button data-tab="bs" type="button"
+          class="tab-btn py-2 px-2 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900">
+          3. Balance Sheet
+        </button>
+      </nav>
+
+      <!-- Mobile Ratios Bar inside Editor -->
+      <div class="xl:hidden bg-slate-50 border-b border-slate-200 px-4 py-1.5 flex items-center justify-between text-[11px] text-slate-600 shrink-0">
+        <span>GP: <strong id="ratioGPMobile" class="text-slate-900">0.00%</strong></span>
+        <span>NP: <strong id="ratioNPMobile" class="text-slate-900">0.00%</strong></span>
+        <span>Current Ratio: <strong id="ratioCRMobile" class="text-slate-900">0.00</strong></span>
+      </div>
+
+      <!-- Scrollable Form Body -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-5">
+
+        <!-- ==================== TAB 1: FIRM DETAILS ==================== -->
+        <div id="tab-firm" class="tab-panel space-y-4">
+          <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-3">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Entity &amp; Statement Info</h2>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-700 mb-1">Firm / Business Name</label>
+              <input id="inpFirmName" type="text"
+                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Proprietor Name</label>
+                <input id="inpProprietor" type="text"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Statement Type</label>
+                <select id="inpStmtType"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                  <option value="ACTUAL">ACTUAL (Standard)</option>
+                  <option value="ESTIMATED">ESTIMATED</option>
+                  <option value="PROJECTED">PROJECTED</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Financial Year</label>
+                <input id="inpFY" type="text" placeholder="e.g. 2025-26"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">As On / Year Ended Date</label>
+                <input id="inpAsOnDate" type="text" placeholder="e.g. 31ST MARCH, 2026"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Place</label>
+                <input id="inpPlace" type="text"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Signing Date</label>
+                <input id="inpSignDate" type="text" placeholder="DD/MM/YYYY"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Footnotes Section -->
+          <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Balance Sheet Footnotes</h2>
+              <button id="btnAutoNotes" type="button" class="text-[11px] font-medium text-indigo-600 hover:underline">
+                Auto-Generate Notes
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-500">One note per line. Displayed below Page 1 Balance Sheet.</p>
+            <textarea id="inpFootnotes" rows="4"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs leading-relaxed focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"></textarea>
+          </div>
+
+          <div class="flex justify-end">
+            <button data-next-tab="pl" type="button"
+              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition">
+              Next: Trading &amp; P&amp;L &rarr;
+            </button>
+          </div>
+        </div>
+
+        <!-- ==================== TAB 2: TRADING & P&L ==================== -->
+        <div id="tab-pl" class="tab-panel hidden space-y-4">
+
+          <!-- Calculation Mode Toggle -->
+          <div class="bg-indigo-50/70 rounded-xl p-3.5 border border-indigo-200 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-indigo-900">P&amp;L Calculation Mode</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5 bg-white p-1 rounded-lg border border-indigo-200">
+              <button id="btnModeTarget" type="button"
+                class="py-1.5 px-2 rounded-md text-xs font-semibold transition bg-indigo-600 text-white shadow-sm">
+                Target Profit (ITR-4)
+              </button>
+              <button id="btnModeManual" type="button"
+                class="py-1.5 px-2 rounded-md text-xs font-semibold transition text-slate-600 hover:text-slate-900">
+                Manual Purchases
+              </button>
+            </div>
+            <p id="modeHelpText" class="text-[11px] text-indigo-800 leading-snug">
+              Enter Sales, Target Business Profit, Stock &amp; Expenses — Purchases &amp; Gross Profit are auto-calculated to match ITR-4 / 44AD exactly.
+            </p>
+          </div>
+
+          <!-- Core Trading Figures -->
+          <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-3">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Trading Account Figures</h2>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Sales / Gross Receipts (₹)</label>
+                <input id="inpSales" type="number" step="1"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+              <div id="wrapTargetProfit">
+                <label class="block text-xs font-medium text-indigo-700 mb-1">Target Business Profit (₹)</label>
+                <input id="inpTargetProfit" type="number" step="1"
+                  class="w-full rounded-lg border border-indigo-300 bg-indigo-50/40 px-3 py-2 text-sm font-semibold text-indigo-900 focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+              <div id="wrapManualPurchases" class="hidden">
+                <label class="block text-xs font-medium text-indigo-700 mb-1">Purchases (₹)</label>
+                <input id="inpManualPurchases" type="number" step="1"
+                  class="w-full rounded-lg border border-indigo-300 bg-indigo-50/40 px-3 py-2 text-sm font-semibold text-indigo-900 focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Opening Stock (₹)</label>
+                <input id="inpOpeningStock" type="number" step="1"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Closing Stock (₹)</label>
+                <input id="inpClosingStock" type="number" step="1"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+            </div>
+
+            <!-- Auto-computed Summary Strip -->
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <div class="bg-white rounded-lg border border-slate-200 px-3 py-2">
+                <div class="text-[11px] text-slate-500">Computed Purchases</div>
+                <div id="dispPurchases" class="text-sm font-bold text-slate-900">₹ 0</div>
+              </div>
+              <div class="bg-white rounded-lg border border-slate-200 px-3 py-2">
+                <div class="text-[11px] text-slate-500">Computed Gross Profit</div>
+                <div id="dispGrossProfit" class="text-sm font-bold text-emerald-700">₹ 0</div>
+              </div>
+            </div>
+            <div id="purchasesWarning" class="hidden text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+              Warning: Computed Purchases is negative. Reduce Target Profit, Expenses, or Closing Stock.
+            </div>
+          </div>
+
+          <!-- Indirect Expenses -->
+          <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Indirect Expenses (P&amp;L Debit)</h2>
+              <button id="btnAddExpense" type="button"
+                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 transition">
+                + Add Expense
+              </button>
+            </div>
+
+            <div id="expensesList" class="space-y-2"></div>
+
+            <!-- Auto-synced Depreciation Row -->
+            <div class="flex items-center justify-between bg-indigo-50/60 border border-indigo-200/80 rounded-lg px-3 py-2 text-xs">
+              <div>
+                <span class="font-semibold text-indigo-900">Depreciation (Auto-synced)</span>
+                <span class="block text-[11px] text-indigo-700">Calculated from Fixed Assets in Tab 3</span>
+              </div>
+              <div class="text-right">
+                <strong id="dispSyncDep" class="text-sm text-indigo-900">₹ 0</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Other Income -->
+          <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Other Income (P&amp;L Credit)</h2>
+              <button id="btnAddOtherIncome" type="button"
+                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 transition">
+                + Add Income
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-500">Optional: Savings Bank Interest, FDR Interest, LTCG u/s 112A, etc. Added to Net Profit transferred to Capital A/c.</p>
+            <div id="otherIncomeList" class="space-y-2"></div>
+          </div>
+
+          <!-- Final P&L Summary -->
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 flex items-center justify-between">
+            <div>
+              <div class="text-xs font-semibold text-emerald-900">Total Net Profit (to Capital A/c)</div>
+              <div id="dispProfitBreakdown" class="text-[11px] text-emerald-700">Business: ₹ 0 + Other: ₹ 0</div>
+            </div>
+            <div id="dispNetProfit" class="text-base font-bold text-emerald-900">₹ 0</div>
+          </div>
+
+          <div class="flex justify-between">
+            <button data-next-tab="firm" type="button"
+              class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+              &larr; Firm Details
+            </button>
+            <button data-next-tab="bs" type="button"
+              class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition">
+              Next: Balance Sheet &rarr;
+            </button>
+          </div>
+        </div>
+
+        <!-- ==================== TAB 3: BALANCE SHEET ==================== -->
+        <div id="tab-bs" class="tab-panel hidden space-y-4">
+
+          <!-- Capital Account -->
+          <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-3">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Capital Account</h2>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Opening Capital (₹)</label>
+                <input id="inpOpeningCapital" type="number" step="1"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Less: Drawings (₹)</label>
+                <input id="inpDrawings" type="number" step="1"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+            </div>
+            <div class="bg-white rounded-lg border border-slate-200 px-3 py-2 flex items-center justify-between text-xs">
+              <span class="text-slate-600">Closing Capital (Auto: Opening + NP - Drawings)</span>
+              <strong id="dispClosingCapital" class="text-sm text-slate-900">₹ 0</strong>
+            </div>
+          </div>
+
+          <!-- Loans & Current Liabilities -->
+          <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-3">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Loans &amp; Current Liabilities</h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Secured Loan / CC Limit Label</label>
+                <input id="inpCCLabel" type="text"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">CC / OD Limit Amount (₹)</label>
+                <input id="inpCCAmount" type="number" step="1"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Unsecured Loans (₹)</label>
+                <input id="inpUnsecuredLoans" type="number" step="1"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Sundry Creditors (₹)</label>
+                <input id="inpCreditors" type="number" step="1"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+            </div>
+
+            <!-- Custom Liabilities -->
+            <div class="pt-1 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-semibold text-slate-600">Other Liabilities / Provisions (Optional)</span>
+                <button id="btnAddLiability" type="button"
+                  class="px-2 py-1 rounded-md text-[11px] font-semibold bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 transition">
+                  + Add Row
+                </button>
+              </div>
+              <div id="customLiabilitiesList" class="space-y-2"></div>
+            </div>
+          </div>
+
+          <!-- Fixed Assets -->
+          <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Fixed Assets (Auto Dep &rarr; P&amp;L)</h2>
+              <button id="btnAddFixedAsset" type="button"
+                class="px-2.5 py-1 rounded-md text-xs font-semibold bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 transition">
+                + Add Asset
+              </button>
+            </div>
+            <div id="fixedAssetsList" class="space-y-2"></div>
+          </div>
+
+          <!-- Current Assets & Auto-Tally -->
+          <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Current Assets</h2>
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                <input id="chkAutoCash" type="checkbox" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500" />
+                <span class="text-xs font-semibold text-indigo-700">Auto-Balance Cash &amp; Bank</span>
+              </label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Deposits &amp; Advances (₹)</label>
+                <input id="inpDeposits" type="number" step="1"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Sundry Debtors (₹)</label>
+                <input id="inpDebtors" type="number" step="1"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">Closing Stock (From P&amp;L)</label>
+                <input id="dispBSStock" type="text" readonly
+                  class="w-full rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-600 cursor-not-allowed" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Cash &amp; Bank Balances (₹)</label>
+                <input id="inpCashBank" type="number" step="1"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none" />
+              </div>
+            </div>
+
+            <div id="cashWarning" class="hidden text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+              Warning: Auto-calculated Cash &amp; Bank is negative. Reduce Debtors/Stock/Deposits or increase Capital/Liabilities.
+            </div>
+          </div>
+
+          <div class="flex justify-start">
+            <button data-next-tab="pl" type="button"
+              class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+              &larr; Trading &amp; P&amp;L
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- ==================== RIGHT PANEL: LIVE A4 2-PAGE PREVIEW ==================== -->
+    <main id="previewPane" class="hidden lg:block flex-1 h-full overflow-y-auto bg-slate-200/80">
+      <div class="preview-stage">
+        <div class="a4-wrapper space-y-6">
+
+          <!-- PAGE 1: BALANCE SHEET -->
+          <section id="page1" class="a4-page">
+            <div class="a4-content">
+              <header class="doc-header">
+                <h1 id="p1FirmName" class="doc-firm-name"></h1>
+                <p id="p1Title" class="doc-stmt-title"></p>
+              </header>
+
+              <table class="fin-table">
+                <thead>
+                  <tr>
+                    <th class="col-part">LIABILITIES</th>
+                    <th class="col-amt amt-col">AMOUNT (₹)</th>
+                    <th class="col-part">ASSETS</th>
+                    <th class="col-amt amt-col">AMOUNT (₹)</th>
+                  </tr>
+                </thead>
+                <tbody id="p1TableBody"></tbody>
+              </table>
+
+              <div id="p1Notes" class="doc-notes"></div>
+
+              <table class="sig-table">
+                <tbody>
+                  <tr>
+                    <td id="p1PlaceDate"></td>
+                    <td class="sig-right">
+                      <span id="p1ForFirm"></span>
+                      <div class="sig-space"></div>
+                      <strong id="p1Proprietor"></strong><br />
+                      (PROPRIETOR)
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <footer class="a4-footer">
+              <span id="p1FooterLeft"></span>
+              <span id="p1FooterMid"></span>
+              <span>Page 1 of 2</span>
+            </footer>
+          </section>
+
+          <!-- PAGE 2: PROFIT & LOSS ACCOUNT -->
+          <section id="page2" class="a4-page">
+            <div class="a4-content">
+              <header class="doc-header">
+                <h1 id="p2FirmName" class="doc-firm-name"></h1>
+                <p id="p2Title" class="doc-stmt-title"></p>
+              </header>
+
+              <table class="fin-table">
+                <thead>
+                  <tr>
+                    <th class="col-part">PARTICULARS</th>
+                    <th class="col-amt amt-col">AMOUNT (₹)</th>
+                    <th class="col-part">PARTICULARS</th>
+                    <th class="col-amt amt-col">AMOUNT (₹)</th>
+                  </tr>
+                </thead>
+                <tbody id="p2TableBody"></tbody>
+              </table>
+
+              <table class="sig-table">
+                <tbody>
+                  <tr>
+                    <td id="p2PlaceDate"></td>
+                    <td class="sig-right">
+                      <span id="p2ForFirm"></span>
+                      <div class="sig-space"></div>
+                      <strong id="p2Proprietor"></strong><br />
+                      (PROPRIETOR)
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <footer class="a4-footer">
+              <span id="p2FooterLeft"></span>
+              <span id="p2FooterMid"></span>
+              <span>Page 2 of 2</span>
+            </footer>
+          </section>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== CARRY FORWARD MODAL ==================== -->
+  <div id="modalCarryForward" class="no-print fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full border border-slate-200 overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900">Carry Forward to Next Year</h3>
+        <button id="btnCloseCF" type="button" class="text-slate-400 hover:text-slate-700 text-xl leading-none">&times;</button>
+      </div>
+      <div class="p-5 space-y-4 text-sm">
+        <p class="text-xs text-slate-600 leading-relaxed">
+          This will carry forward <strong>Closing Capital</strong>, <strong>Closing Stock</strong>, and <strong>Net Fixed Assets</strong> as next year's Opening balances, increment the Financial Year &amp; Date by 1 year, and switch the statement type (Actual &rarr; Estimated &rarr; Projected).
+        </p>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Sales Growth (%)</label>
+            <input id="cfSalesGrowth" type="number" value="18" step="1"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Profit Growth (%)</label>
+            <input id="cfProfitGrowth" type="number" value="15" step="1"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Closing Stock Growth (%)</label>
+            <input id="cfStockGrowth" type="number" value="15" step="1"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Expenses Growth (%)</label>
+            <input id="cfExpGrowth" type="number" value="10" step="1"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+        </div>
+
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900">
+          Tip: Save the current year's <code>.json</code> file first if you want to keep a backup before rolling forward.
+        </div>
+      </div>
+      <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+        <button id="btnCancelCF" type="button"
+          class="px-4 py-2 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 transition">
+          Cancel
+        </button>
+        <button id="btnApplyCF" type="button"
+          class="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition">
+          Carry Forward &amp; Apply
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TOAST NOTIFICATION ==================== -->
+  <div id="toast" class="no-print fixed bottom-5 right-5 bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-xl shadow-lg opacity-0 pointer-events-none transition-opacity duration-200 z-50">
+  </div>
+
+  <!-- ==================== APPLICATION LOGIC ==================== -->
+  <script>
+    'use strict';
+
+    // ==================== HELPER UTILITIES ====================
+
+    /**
+     * Formats an integer/number using Indian numbering system (e.g., 12,50,464).
+     */
+    function formatINR(num) {
+      const n = Math.round(Number(num) || 0);
+      const isNeg = n < 0;
+      const absStr = Math.abs(n).toLocaleString('en-IN');
+      return isNeg ? `(${absStr})` : absStr;
+    }
+
+    /**
+     * Escapes HTML special characters to prevent injection in innerHTML.
+     */
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    /**
+     * Converts a string to Title Case for "For M/S ..." signature block.
+     */
+    function toTitleCase(str) {
+      return String(str || '').replace(/\w\S*/g, (txt) => {
+        if (txt.toUpperCase() === 'M/S') return 'M/S';
+        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+      });
+    }
+
+    /**
+     * Displays a non-blocking toast message.
+     */
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.remove('opacity-0');
+      el.classList.add('opacity-100');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.remove('opacity-100');
+        el.classList.add('opacity-0');
+      }, 2800);
+    }
+
+    // ==================== DEFAULT SAMPLE DATA ====================
+    function getSampleState() {
+      return {
+        firm: {
+          name: 'M/S SHARMA GENERAL STORE',
+          proprietor: 'RAJESH SHARMA',
+          place: 'BINA (SAGAR)',
+          signDate: '17/08/2026',
+          fy: '2025-26',
+          asOnDate: '31ST MARCH, 2026',
+          stmtType: 'ACTUAL', // ACTUAL | ESTIMATED | PROJECTED
+          footnotes:
+            '*Net Profit transferred to Capital Account includes all income components strictly as declared in ITR computation (AY 2026-27).\n' +
+            '*Closing Capital (12,50,000) carried forward as Opening Capital for the subsequent year 2026-27.'
+        },
+        pl: {
+          mode: 'target', // 'target' | 'manual'
+          sales: 2650000,
+          targetBusinessProfit: 785000,
+          manualPurchases: 1750000,
+          openingStock: 240000,
+          closingStock: 520000,
+          expenses: [
+            { id: 'e1', name: 'Interest on CC / OD Limit', amount: 54000 },
+            { id: 'e2', name: 'Shop Rent Expenses', amount: 60000 },
+            { id: 'e3', name: 'Staff Salary Expenses', amount: 120000 },
+            { id: 'e4', name: 'Bank & IMPS Charges', amount: 2800 },
+            { id: 'e5', name: 'Electricity & Other Shop Expenses', amount: 46200 }
+          ],
+          otherIncome: [
+            { id: 'o1', name: 'Interest from Savings Bank', amount: 450 }
+          ]
+        },
+        bs: {
+          openingCapital: 1064550,
+          drawings: 600000,
+          ccLabel: 'CC / OD Limit (SBI / Canara Bank)',
+          ccAmount: 500000,
+          unsecuredLoans: 0,
+          creditors: 45000,
+          customLiabilities: [],
+          fixedAssets: [
+            { id: 'fa1', name: 'Furniture & Fixture', opening: 85000, depRate: 10 }
+          ],
+          deposits: 150000,
+          debtors: 520000,
+          autoBalanceCash: true,
+          manualCashBank: 528500
+        }
+      };
+    }
+
+    // Global Application State
+    let state = getSampleState();
+
+    // ==================== CORE ACCOUNTING ENGINE ====================
+
+    /**
+     * Computes all derived financial values deterministically from `state`.
+     */
+    function computeFinancials() {
+      // 1. Fixed Assets & Depreciation
+      const fixedAssetsComputed = state.bs.fixedAssets.map((fa) => {
+        const opening = Math.round(Number(fa.opening) || 0);
+        const rate = Number(fa.depRate) || 0;
+        const dep = Math.round((opening * rate) / 100);
+        const net = opening - dep;
+        return { ...fa, opening, rate, dep, net };
+      });
+
+      const totalDep = fixedAssetsComputed.reduce((sum, fa) => sum + fa.dep, 0);
+      const totalFixedAssetsNet = fixedAssetsComputed.reduce((sum, fa) => sum + fa.net, 0);
+
+      // 2. Indirect Expenses & Other Income
+      const totalOtherExp = state.pl.expenses.reduce((sum, e) => sum + Math.round(Number(e.amount) || 0), 0);
+      const totalIndirectExp = totalOtherExp + totalDep;
+      const totalOtherIncome = state.pl.otherIncome.reduce((sum, o) => sum + Math.round(Number(o.amount) || 0), 0);
+
+      // 3. Trading Account & P&L Account
+      const sales = Math.round(Number(state.pl.sales) || 0);
+      const openingStock = Math.round(Number(state.pl.openingStock) || 0);
+      const closingStock = Math.round(Number(state.pl.closingStock) || 0);
+
+      let purchases = 0;
+      let grossProfit = 0;
+      let businessProfit = 0;
+
+      if (state.pl.mode === 'target') {
+        businessProfit = Math.round(Number(state.pl.targetBusinessProfit) || 0);
+        grossProfit = businessProfit + totalIndirectExp;
+        purchases = sales + closingStock - openingStock - grossProfit;
+      } else {
+        purchases = Math.round(Number(state.pl.manualPurchases) || 0);
+        grossProfit = sales + closingStock - openingStock - purchases;
+        businessProfit = grossProfit - totalIndirectExp;
+      }
+
+      const totalNetProfit = businessProfit + totalOtherIncome;
+
+      // Trading Totals
+      const tradingCreditTotal = sales + closingStock + (grossProfit < 0 ? Math.abs(grossProfit) : 0);
+      const tradingDebitTotal = openingStock + purchases + (grossProfit >= 0 ? grossProfit : 0);
+
+      // P&L Totals
+      const plCreditTotal = (grossProfit >= 0 ? grossProfit : 0) + totalOtherIncome + (totalNetProfit < 0 ? Math.abs(totalNetProfit) : 0);
+      const plDebitTotal = (grossProfit < 0 ? Math.abs(grossProfit) : 0) + totalIndirectExp + (totalNetProfit >= 0 ? totalNetProfit : 0);
+
+      // 4. Balance Sheet
+      const openingCapital = Math.round(Number(state.bs.openingCapital) || 0);
+      const drawings = Math.round(Number(state.bs.drawings) || 0);
+      const closingCapital = openingCapital + totalNetProfit - drawings;
+
+      const ccAmount = Math.round(Number(state.bs.ccAmount) || 0);
+      const unsecuredLoans = Math.round(Number(state.bs.unsecuredLoans) || 0);
+      const creditors = Math.round(Number(state.bs.creditors) || 0);
+      const totalCustomLiab = state.bs.customLiabilities.reduce((sum, l) => sum + Math.round(Number(l.amount) || 0), 0);
+
+      const totalLiabilities = closingCapital + ccAmount + unsecuredLoans + creditors + totalCustomLiab;
+
+      const deposits = Math.round(Number(state.bs.deposits) || 0);
+      const debtors = Math.round(Number(state.bs.debtors) || 0);
+
+      let cashBank = 0;
+      if (state.bs.autoBalanceCash) {
+        cashBank = totalLiabilities - (totalFixedAssetsNet + deposits + debtors + closingStock);
+      } else {
+        cashBank = Math.round(Number(state.bs.manualCashBank) || 0);
+      }
+
+      const totalAssets = totalFixedAssetsNet + deposits + debtors + closingStock + cashBank;
+      const diff = totalLiabilities - totalAssets;
+
+      // 5. Financial Ratios
+      const gpPercent = sales > 0 ? (grossProfit / sales) * 100 : 0;
+      const npPercent = sales > 0 ? (totalNetProfit / sales) * 100 : 0;
+      const currentAssets = deposits + debtors + closingStock + cashBank;
+      const currentLiabilities = ccAmount + creditors + totalCustomLiab;
+      const currentRatio = currentLiabilities > 0 ? currentAssets / currentLiabilities : 0;
+
+      return {
+        fixedAssetsComputed,
+        totalDep,
+        totalFixedAssetsNet,
+        totalOtherExp,
+        totalIndirectExp,
+        totalOtherIncome,
+        sales,
+        openingStock,
+        closingStock,
+        purchases,
+        grossProfit,
+        businessProfit,
+        totalNetProfit,
+        tradingCreditTotal,
+        tradingDebitTotal,
+        plCreditTotal,
+        plDebitTotal,
+        openingCapital,
+        drawings,
+        closingCapital,
+        ccAmount,
+        unsecuredLoans,
+        creditors,
+        totalCustomLiab,
+        totalLiabilities,
+        deposits,
+        debtors,
+        cashBank,
+        totalAssets,
+        diff,
+        gpPercent,
+        npPercent,
+        currentRatio
+      };
+    }
+
+    // ==================== RENDER DYNAMIC LISTS IN EDITOR ====================
+
+    function renderExpensesEditor() {
+      const container = document.getElementById('expensesList');
+      container.innerHTML = '';
+      state.pl.expenses.forEach((exp, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-2';
+        row.innerHTML = `
+          <input type="text" data-exp-name="${idx}" value="${escapeHtml(exp.name)}" placeholder="Expense Name"
+            class="flex-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <input type="number" step="1" data-exp-amt="${idx}" value="${exp.amount}" placeholder="0"
+            class="w-28 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-right font-medium focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <button type="button" data-exp-del="${idx}" title="Remove"
+            class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">
+            &times;
+          </button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function renderOtherIncomeEditor() {
+      const container = document.getElementById('otherIncomeList');
+      container.innerHTML = '';
+      state.pl.otherIncome.forEach((inc, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-2';
+        row.innerHTML = `
+          <input type="text" data-inc-name="${idx}" value="${escapeHtml(inc.name)}" placeholder="Income Head"
+            class="flex-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <input type="number" step="1" data-inc-amt="${idx}" value="${inc.amount}" placeholder="0"
+            class="w-28 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-right font-medium focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <button type="button" data-inc-del="${idx}" title="Remove"
+            class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">
+            &times;
+          </button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function renderCustomLiabilitiesEditor() {
+      const container = document.getElementById('customLiabilitiesList');
+      container.innerHTML = '';
+      state.bs.customLiabilities.forEach((liab, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-2';
+        row.innerHTML = `
+          <input type="text" data-liab-name="${idx}" value="${escapeHtml(liab.name)}" placeholder="Liability Name"
+            class="flex-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <input type="number" step="1" data-liab-amt="${idx}" value="${liab.amount}" placeholder="0"
+            class="w-28 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-right font-medium focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <button type="button" data-liab-del="${idx}" title="Remove"
+            class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">
+            &times;
+          </button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function renderFixedAssetsEditor() {
+      const container = document.getElementById('fixedAssetsList');
+      container.innerHTML = '';
+      state.bs.fixedAssets.forEach((fa, idx) => {
+        const dep = Math.round(((Number(fa.opening) || 0) * (Number(fa.depRate) || 0)) / 100);
+        const net = Math.round(Number(fa.opening) || 0) - dep;
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-lg border border-slate-200 p-2.5 space-y-2';
+        card.innerHTML = `
+          <div class="flex items-center gap-2">
+            <input type="text" data-fa-name="${idx}" value="${escapeHtml(fa.name)}" placeholder="Asset Name"
+              class="flex-1 rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none" />
+            <button type="button" data-fa-del="${idx}" title="Remove Asset"
+              class="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition">
+              &times;
+            </button>
+          </div>
+          <div class="grid grid-cols-3 gap-2 items-center text-[11px]">
+            <div>
+              <label class="block text-slate-500 mb-0.5">Opening (₹)</label>
+              <input type="number" step="1" data-fa-open="${idx}" value="${fa.opening}"
+                class="w-full rounded-md border border-slate-300 px-2 py-1 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" />
+            </div>
+            <div>
+              <label class="block text-slate-500 mb-0.5">Dep Rate (%)</label>
+              <input type="number" step="0.5" data-fa-rate="${idx}" value="${fa.depRate}"
+                class="w-full rounded-md border border-slate-300 px-2 py-1 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" />
+            </div>
+            <div class="bg-slate-50 rounded-md px-2 py-1 border border-slate-200 text-right">
+              <div class="text-slate-500">Dep: ₹${formatINR(dep)}</div>
+              <div class="font-bold text-slate-800">Net: ₹${formatINR(net)}</div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    /**
+     * Syncs static form input values from `state`.
+     */
+    function syncInputsFromState() {
+      document.getElementById('inpFirmName').value = state.firm.name;
+      document.getElementById('inpProprietor').value = state.firm.proprietor;
+      document.getElementById('inpStmtType').value = state.firm.stmtType;
+      document.getElementById('inpFY').value = state.firm.fy;
+      document.getElementById('inpAsOnDate').value = state.firm.asOnDate;
+      document.getElementById('inpPlace').value = state.firm.place;
+      document.getElementById('inpSignDate').value = state.firm.signDate;
+      document.getElementById('inpFootnotes').value = state.firm.footnotes;
+
+      // P&L Mode buttons
+      const isTarget = state.pl.mode === 'target';
+      document.getElementById('btnModeTarget').className = isTarget
+        ? 'py-1.5 px-2 rounded-md text-xs font-semibold transition bg-indigo-600 text-white shadow-sm'
+        : 'py-1.5 px-2 rounded-md text-xs font-semibold transition text-slate-600 hover:text-slate-900';
+      document.getElementById('btnModeManual').className = !isTarget
+        ? 'py-1.5 px-2 rounded-md text-xs font-semibold transition bg-indigo-600 text-white shadow-sm'
+        : 'py-1.5 px-2 rounded-md text-xs font-semibold transition text-slate-600 hover:text-slate-900';
+      document.getElementById('wrapTargetProfit').classList.toggle('hidden', !isTarget);
+      document.getElementById('wrapManualPurchases').classList.toggle('hidden', isTarget);
+      document.getElementById('modeHelpText').textContent = isTarget
+        ? 'Enter Sales, Target Business Profit, Stock & Expenses — Purchases & Gross Profit are auto-calculated to match ITR-4 / 44AD exactly.'
+        : 'Enter Opening Stock, Purchases, Sales, Closing Stock & Expenses — Gross Profit & Net Profit are auto-calculated.';
+
+      document.getElementById('inpSales').value = state.pl.sales;
+      document.getElementById('inpTargetProfit').value = state.pl.targetBusinessProfit;
+      document.getElementById('inpManualPurchases').value = state.pl.manualPurchases;
+      document.getElementById('inpOpeningStock').value = state.pl.openingStock;
+      document.getElementById('inpClosingStock').value = state.pl.closingStock;
+
+      document.getElementById('inpOpeningCapital').value = state.bs.openingCapital;
+      document.getElementById('inpDrawings').value = state.bs.drawings;
+      document.getElementById('inpCCLabel').value = state.bs.ccLabel;
+      document.getElementById('inpCCAmount').value = state.bs.ccAmount;
+      document.getElementById('inpUnsecuredLoans').value = state.bs.unsecuredLoans;
+      document.getElementById('inpCreditors').value = state.bs.creditors;
+      document.getElementById('inpDeposits').value = state.bs.deposits;
+      document.getElementById('inpDebtors').value = state.bs.debtors;
+      document.getElementById('chkAutoCash').checked = state.bs.autoBalanceCash;
+
+      renderExpensesEditor();
+      renderOtherIncomeEditor();
+      renderCustomLiabilitiesEditor();
+      renderFixedAssetsEditor();
+    }
+
+    // ==================== LIVE PREVIEW RENDERER ====================
+
+    function renderAll() {
+      const f = computeFinancials();
+
+      // Update Editor Readouts
+      document.getElementById('dispPurchases').textContent = `₹ ${formatINR(f.purchases)}`;
+      document.getElementById('dispGrossProfit').textContent = `₹ ${formatINR(f.grossProfit)}`;
+      document.getElementById('dispSyncDep').textContent = `₹ ${formatINR(f.totalDep)}`;
+      document.getElementById('dispNetProfit').textContent = `₹ ${formatINR(f.totalNetProfit)}`;
+      document.getElementById('dispProfitBreakdown').textContent = `Business: ₹ ${formatINR(f.businessProfit)} + Other: ₹ ${formatINR(f.totalOtherIncome)}`;
+      document.getElementById('dispClosingCapital').textContent = `₹ ${formatINR(f.closingCapital)}`;
+      document.getElementById('dispBSStock').value = formatINR(f.closingStock);
+
+      const cashInput = document.getElementById('inpCashBank');
+      if (state.bs.autoBalanceCash) {
+        cashInput.value = f.cashBank;
+        cashInput.readOnly = true;
+        cashInput.classList.add('bg-indigo-50/50', 'text-indigo-900', 'cursor-not-allowed');
+      } else {
+        cashInput.value = state.bs.manualCashBank;
+        cashInput.readOnly = false;
+        cashInput.classList.remove('bg-indigo-50/50', 'text-indigo-900', 'cursor-not-allowed');
+      }
+
+      // Warnings
+      document.getElementById('purchasesWarning').classList.toggle('hidden', f.purchases >= 0);
+      document.getElementById('cashWarning').classList.toggle('hidden', f.cashBank >= 0);
+
+      // Ratios
+      const gpStr = `${f.gpPercent.toFixed(2)}%`;
+      const npStr = `${f.npPercent.toFixed(2)}%`;
+      const crStr = f.currentRatio > 0 ? f.currentRatio.toFixed(2) : 'N/A';
+      document.getElementById('ratioGP').textContent = gpStr;
+      document.getElementById('ratioNP').textContent = npStr;
+      document.getElementById('ratioCR').textContent = crStr;
+      document.getElementById('ratioGPMobile').textContent = gpStr;
+      document.getElementById('ratioNPMobile').textContent = npStr;
+      document.getElementById('ratioCRMobile').textContent = crStr;
+
+      // Tally Badge
+      const badge = document.getElementById('tallyBadge');
+      if (f.diff === 0) {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> TALLIED (₹ ${formatINR(f.totalLiabilities)})`;
+      } else {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40';
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span> DIFF: ₹ ${formatINR(Math.abs(f.diff))}`;
+      }
+
+      // Statement Prefix
+      const prefix = state.firm.stmtType === 'ACTUAL' ? '' : `${state.firm.stmtType} `;
+      const npLabel = state.firm.stmtType === 'ACTUAL'
+        ? 'Net Profit'
+        : (state.firm.stmtType === 'ESTIMATED' ? 'Estimated Net Profit' : 'Projected Net Profit');
+      const footerPrefix = state.firm.stmtType === 'ACTUAL'
+        ? 'Financial Statements'
+        : `${toTitleCase(state.firm.stmtType)} Financial Statements`;
+
+      // ==================== RENDER PAGE 1: BALANCE SHEET ====================
+      document.getElementById('p1FirmName').textContent = state.firm.name || 'FIRM NAME';
+      document.getElementById('p1Title').textContent = `${prefix}BALANCE SHEET AS ON ${state.firm.asOnDate || ''}`;
+
+      // Build Left (Liabilities) & Right (Assets) column arrays so rows align cleanly in the 4-col grid
+      const leftRows = [];
+      const rightRows = [];
+
+      // Left: Capital A/c
+      leftRows.push({ label: 'CAPITAL A/C', amt: '', isGroup: true });
+      leftRows.push({
+        label: `Opening Balance: ${formatINR(f.openingCapital)}<br>Add: ${escapeHtml(npLabel)}: ${formatINR(f.totalNetProfit)}<br>Less: Drawings: (${formatINR(f.drawings)})`,
+        amt: formatINR(f.closingCapital),
+        isCapital: true
+      });
+
+      // Left: Secured Loans
+      if (f.ccAmount !== 0) {
+        leftRows.push({ label: 'SECURED LOANS', amt: '', isGroup: true });
+        leftRows.push({ label: escapeHtml(state.bs.ccLabel || 'CC / OD Limit'), amt: formatINR(f.ccAmount) });
+      }
+
+      // Left: Unsecured Loans
+      if (f.unsecuredLoans !== 0) {
+        leftRows.push({ label: 'LOANS (UNSECURED)', amt: '', isGroup: true });
+        leftRows.push({ label: 'Unsecured Loans', amt: formatINR(f.unsecuredLoans) });
+      }
+
+      // Left: Current Liabilities & Provisions
+      const hasCurrentLiab = f.creditors !== 0 || state.bs.customLiabilities.some((l) => (Number(l.amount) || 0) !== 0);
+      if (hasCurrentLiab) {
+        leftRows.push({ label: 'CURRENT LIABILITIES &amp; PROVISIONS', amt: '', isGroup: true });
+        if (f.creditors !== 0) {
+          leftRows.push({ label: 'Sundry Creditors', amt: formatINR(f.creditors) });
+        }
+        state.bs.customLiabilities.forEach((l) => {
+          const val = Math.round(Number(l.amount) || 0);
+          if (val !== 0 || (l.name && l.name.trim())) {
+            leftRows.push({ label: escapeHtml(l.name || 'Other Liability'), amt: formatINR(val) });
+          }
+        });
+      }
+
+      // Right: Fixed Assets
+      if (f.fixedAssetsComputed.length > 0) {
+        rightRows.push({ label: 'FIXED ASSETS', amt: '', isGroup: true });
+        f.fixedAssetsComputed.forEach((fa) => {
+          rightRows.push({ label: `${escapeHtml(fa.name || 'Fixed Asset')} (Net)`, amt: formatINR(fa.net) });
+        });
+      }
+
+      // Right: Current Assets
+      rightRows.push({ label: 'CURRENT ASSETS', amt: '', isGroup: true });
+      if (f.deposits !== 0) {
+        rightRows.push({ label: 'Deposits &amp; Advances', amt: formatINR(f.deposits) });
+      }
+      if (f.debtors !== 0) {
+        rightRows.push({ label: 'Sundry Debtors', amt: formatINR(f.debtors) });
+      }
+      rightRows.push({ label: 'Closing Stock', amt: formatINR(f.closingStock) });
+      rightRows.push({ label: 'Cash &amp; Bank Balances', amt: formatINR(f.cashBank) });
+
+      // Merge Left & Right rows
+      const maxBSRows = Math.max(leftRows.length, rightRows.length);
+      let bsHtml = '';
+      for (let i = 0; i < maxBSRows; i++) {
+        const L = leftRows[i] || { label: '&nbsp;', amt: '' };
+        const R = rightRows[i] || { label: '&nbsp;', amt: '' };
+
+        const lClass = L.isGroup ? 'group-title' : (L.isCapital ? 'cap-detail' : '');
+        const lAmtClass = L.isCapital ? 'amt-cell cap-amt' : 'amt-cell';
+        const rClass = R.isGroup ? 'group-title' : '';
+
+        bsHtml += `
+          <tr>
+            <td class="${lClass}">${L.label}</td>
+            <td class="${lAmtClass}">${L.amt}</td>
+            <td class="${rClass}">${R.label}</td>
+            <td class="amt-cell">${R.amt}</td>
+          </tr>
+        `;
+      }
+
+      bsHtml += `
+        <tr class="total-row">
+          <td>TOTAL</td>
+          <td class="amt-cell">${formatINR(f.totalLiabilities)}</td>
+          <td>TOTAL</td>
+          <td class="amt-cell">${formatINR(f.totalAssets)}</td>
+        </tr>
+      `;
+      document.getElementById('p1TableBody').innerHTML = bsHtml;
+
+      // Footnotes
+      const notesLines = (state.firm.footnotes || '').split('\n').map((s) => s.trim()).filter(Boolean);
+      document.getElementById('p1Notes').innerHTML = notesLines.map((line) => `<p>${escapeHtml(line)}</p>`).join('');
+
+      // Signatures & Footers (Page 1 & Page 2)
+      const placeDateHtml = `Place: ${escapeHtml(state.firm.place)}<br>Date: ${escapeHtml(state.firm.signDate)}`;
+      const forFirmText = `For ${toTitleCase(state.firm.name)}`;
+      const propText = (state.firm.proprietor || '').toUpperCase();
+      const footerLeft = `${footerPrefix} - ${(state.firm.name || '').toUpperCase()}`;
+      const footerMid = `Year: ${state.firm.fy || ''}`;
+
+      document.getElementById('p1PlaceDate').innerHTML = placeDateHtml;
+      document.getElementById('p1ForFirm').textContent = forFirmText;
+      document.getElementById('p1Proprietor').textContent = propText;
+      document.getElementById('p1FooterLeft').textContent = footerLeft;
+      document.getElementById('p1FooterMid').textContent = footerMid;
+
+      // ==================== RENDER PAGE 2: PROFIT & LOSS ACCOUNT ====================
+      document.getElementById('p2FirmName').textContent = state.firm.name || 'FIRM NAME';
+      document.getElementById('p2Title').textContent = `${prefix}PROFIT & LOSS ACCOUNT FOR THE YEAR ENDED ON ${state.firm.asOnDate || ''}`;
+
+      // Trading Section Rows
+      const trDr = [
+        { label: 'To Opening Stock', amt: formatINR(f.openingStock) },
+        { label: 'To Purchases', amt: formatINR(f.purchases) }
+      ];
+      const trCr = [
+        { label: 'By Sales / Gross Receipts', amt: formatINR(f.sales) },
+        { label: 'By Closing Stock', amt: formatINR(f.closingStock) }
+      ];
+
+      if (f.grossProfit >= 0) {
+        trDr.push({ label: 'To Gross Profit c/d', amt: formatINR(f.grossProfit) });
+      } else {
+        trCr.push({ label: 'By Gross Loss c/d', amt: formatINR(Math.abs(f.grossProfit)) });
+      }
+
+      const maxTrRows = Math.max(trDr.length, trCr.length);
+      let plHtml = '';
+      for (let i = 0; i < maxTrRows; i++) {
+        const D = trDr[i] || { label: '', amt: '' };
+        const C = trCr[i] || { label: '', amt: '' };
+        plHtml += `
+          <tr>
+            <td>${D.label}</td>
+            <td class="amt-cell">${D.amt}</td>
+            <td>${C.label}</td>
+            <td class="amt-cell">${C.amt}</td>
+          </tr>
+        `;
+      }
+
+      plHtml += `
+        <tr class="total-row">
+          <td>TOTAL</td>
+          <td class="amt-cell">${formatINR(f.tradingDebitTotal)}</td>
+          <td>TOTAL</td>
+          <td class="amt-cell">${formatINR(f.tradingCreditTotal)}</td>
+        </tr>
+      `;
+
+      // P&L Section Rows
+      const plDr = [];
+      const plCr = [];
+
+      if (f.grossProfit >= 0) {
+        plCr.push({ label: 'By Gross Profit b/d', amt: formatINR(f.grossProfit) });
+      } else {
+        plDr.push({ label: 'To Gross Loss b/d', amt: formatINR(Math.abs(f.grossProfit)) });
+      }
+
+      // Indirect Expenses
+      state.pl.expenses.forEach((exp) => {
+        const val = Math.round(Number(exp.amount) || 0);
+        if (val !== 0 || (exp.name && exp.name.trim())) {
+          plDr.push({ label: `To ${escapeHtml(exp.name || 'Expense')}`, amt: formatINR(val) });
+        }
+      });
+
+      // Synced Depreciation
+      if (f.totalDep > 0) {
+        plDr.push({ label: 'To Depreciation', amt: formatINR(f.totalDep) });
+      }
+
+      // Other Income
+      state.pl.otherIncome.forEach((inc) => {
+        const val = Math.round(Number(inc.amount) || 0);
+        if (val !== 0 || (inc.name && inc.name.trim())) {
+          plCr.push({ label: `By ${escapeHtml(inc.name || 'Other Income')}`, amt: formatINR(val) });
+        }
+      });
+
+      // Net Profit / Net Loss
+      if (f.totalNetProfit >= 0) {
+        plDr.push({
+          label: `<strong>To ${escapeHtml(npLabel)} transferred to Capital A/c</strong>`,
+          amt: `<strong>${formatINR(f.totalNetProfit)}</strong>`
+        });
+      } else {
+        plCr.push({
+          label: `<strong>By Net Loss transferred to Capital A/c</strong>`,
+          amt: `<strong>${formatINR(Math.abs(f.totalNetProfit))}</strong>`
+        });
+      }
+
+      const maxPLRows = Math.max(plDr.length, plCr.length);
+      for (let i = 0; i < maxPLRows; i++) {
+        const D = plDr[i] || { label: '', amt: '' };
+        const C = plCr[i] || { label: '', amt: '' };
+        plHtml += `
+          <tr>
+            <td>${D.label}</td>
+            <td class="amt-cell">${D.amt}</td>
+            <td>${C.label}</td>
+            <td class="amt-cell">${C.amt}</td>
+          </tr>
+        `;
+      }
+
+      plHtml += `
+        <tr class="total-row">
+          <td>TOTAL</td>
+          <td class="amt-cell">${formatINR(f.plDebitTotal)}</td>
+          <td>TOTAL</td>
+          <td class="amt-cell">${formatINR(f.plCreditTotal)}</td>
+        </tr>
+      `;
+
+      document.getElementById('p2TableBody').innerHTML = plHtml;
+      document.getElementById('p2PlaceDate').innerHTML = placeDateHtml;
+      document.getElementById('p2ForFirm').textContent = forFirmText;
+      document.getElementById('p2Proprietor').textContent = propText;
+      document.getElementById('p2FooterLeft').textContent = footerLeft;
+      document.getElementById('p2FooterMid').textContent = footerMid;
+    }
+
+    // ==================== AUTO-GENERATE FOOTNOTES ====================
+    function generateDefaultNotes() {
+      const f = computeFinancials();
+      const fyParts = (state.firm.fy || '2025-26').split('-');
+      let ayStr = '2026-27';
+      let nextFyStr = '2026-27';
+      if (fyParts.length === 2) {
+        const y1 = parseInt(fyParts[0], 10);
+        if (!isNaN(y1)) {
+          ayStr = `${y1 + 1}-${String(y1 + 2).slice(-2)}`;
+          nextFyStr = `${y1 + 1}-${String(y1 + 2).slice(-2)}`;
+        }
+      }
+
+      if (state.firm.stmtType === 'ACTUAL') {
+        state.firm.footnotes =
+          `*Net Profit transferred to Capital Account includes all income components strictly as declared in ITR computation (AY ${ayStr}).\n` +
+          `*Closing Capital (${formatINR(f.closingCapital)}) carried forward as Opening Capital for the subsequent year ${nextFyStr}.`;
+      } else if (state.firm.stmtType === 'ESTIMATED') {
+        state.firm.footnotes =
+          `*Opening Capital (${formatINR(f.openingCapital)}) and Opening Stock (${formatINR(f.openingStock)}) are carried forward from previous year Actual Balance Sheet.\n` +
+          `*Estimated financial figures for FY ${state.firm.fy} are prepared on the basis of projected business turnover and working capital requirement.`;
+      } else {
+        state.firm.footnotes =
+          `*Opening Capital (${formatINR(f.openingCapital)}) and Opening Stock (${formatINR(f.openingStock)}) are carried forward from previous year Estimated Balance Sheet.\n` +
+          `*Projected financial figures for FY ${state.firm.fy} are prepared on the basis of anticipated business growth and working capital cycle.`;
+      }
+
+      document.getElementById('inpFootnotes').value = state.firm.footnotes;
+      renderAll();
+      showToast('Footnotes updated for ' + state.firm.stmtType);
+    }
+
+    // ==================== CARRY FORWARD TO NEXT YEAR ====================
+    function applyCarryForward() {
+      const f = computeFinancials();
+      const salesG = 1 + (Number(document.getElementById('cfSalesGrowth').value) || 0) / 100;
+      const profitG = 1 + (Number(document.getElementById('cfProfitGrowth').value) || 0) / 100;
+      const stockG = 1 + (Number(document.getElementById('cfStockGrowth').value) || 0) / 100;
+      const expG = 1 + (Number(document.getElementById('cfExpGrowth').value) || 0) / 100;
+
+      // 1. Increment FY (e.g. 2025-26 -> 2026-27)
+      const fyMatch = (state.firm.fy || '').match(/(\d{4})\s*-\s*(\d{2,4})/);
+      if (fyMatch) {
+        const y1 = parseInt(fyMatch[1], 10) + 1;
+        const y2 = y1 + 1;
+        state.firm.fy = `${y1}-${String(y2).slice(-2)}`;
+      }
+
+      // 2. Increment Year in As On Date (e.g. 31ST MARCH, 2026 -> 31ST MARCH, 2027)
+      state.firm.asOnDate = (state.firm.asOnDate || '').replace(/(\d{4})/, (m) => String(parseInt(m, 10) + 1));
+
+      // 3. Advance Statement Type
+      if (state.firm.stmtType === 'ACTUAL') {
+        state.firm.stmtType = 'ESTIMATED';
+      } else if (state.firm.stmtType === 'ESTIMATED') {
+        state.firm.stmtType = 'PROJECTED';
+      }
+
+      // 4. Carry Forward Balances
+      state.bs.openingCapital = f.closingCapital;
+      state.pl.openingStock = f.closingStock;
+      state.bs.fixedAssets = f.fixedAssetsComputed.map((fa) => ({
+        id: fa.id,
+        name: fa.name,
+        opening: fa.net,
+        depRate: fa.rate
+      }));
+
+      // 5. Apply Growth Rates
+      state.pl.sales = Math.round((f.sales * salesG) / 100) * 100;
+      state.pl.targetBusinessProfit = Math.round((f.businessProfit * profitG) / 100) * 100;
+      state.pl.manualPurchases = Math.round((f.purchases * salesG) / 100) * 100;
+      state.pl.closingStock = Math.round((f.closingStock * stockG) / 100) * 100;
+      state.pl.expenses = state.pl.expenses.map((e) => ({
+        ...e,
+        amount: Math.round(((Number(e.amount) || 0) * expG) / 100) * 100
+      }));
+      // Clear non-recurring other income for projections
+      state.pl.otherIncome = [];
+
+      // Grow Debtors & Drawings modestly
+      state.bs.debtors = Math.round((f.debtors * salesG) / 100) * 100;
+      state.bs.drawings = Math.round((f.drawings * expG) / 100) * 100;
+
+      // Update footnotes automatically
+      syncInputsFromState();
+      generateDefaultNotes();
+      closeCarryForwardModal();
+      showToast(`Carried forward to FY ${state.firm.fy} (${state.firm.stmtType})`);
+    }
+
+    function openCarryForwardModal() {
+      const m = document.getElementById('modalCarryForward');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closeCarryForwardModal() {
+      const m = document.getElementById('modalCarryForward');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    // ==================== SAVE & LOAD JSON ====================
+    function saveClientJson() {
+      try {
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const safeName = (state.firm.name || 'client').replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '');
+        a.href = url;
+        a.download = `${safeName}_${state.firm.fy || 'FY'}_${state.firm.stmtType}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Client file saved (.json)');
+      } catch (err) {
+        showToast('Error saving file: ' + err.message);
+      }
+    }
+
+    function loadClientJson(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!parsed.firm || !parsed.pl || !parsed.bs) {
+            throw new Error('Invalid client JSON format');
+          }
+          state = parsed;
+          syncInputsFromState();
+          renderAll();
+          showToast(`Loaded: ${state.firm.name}`);
+        } catch (err) {
+          showToast('Could not load file: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ==================== EVENT LISTENERS ====================
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-panel').forEach((p) => p.classList.add('hidden'));
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+      document.querySelectorAll('.tab-btn').forEach((btn) => {
+        const active = btn.dataset.tab === tabName;
+        btn.className = active
+          ? 'tab-btn py-2 px-2 rounded-lg text-xs font-semibold transition bg-white text-indigo-700 shadow-sm border border-slate-200'
+          : 'tab-btn py-2 px-2 rounded-lg text-xs font-semibold transition text-slate-600 hover:text-slate-900';
+      });
+    }
+
+    function bindEvents() {
+      // Tab switching
+      document.querySelectorAll('.tab-btn').forEach((btn) => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+      document.querySelectorAll('[data-next-tab]').forEach((btn) => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.nextTab));
+      });
+
+      // Desktop sidebar collapse toggle
+      document.getElementById('btnToggleSidebar').addEventListener('click', () => {
+        const editor = document.getElementById('editorPane');
+        editor.classList.toggle('lg:hidden');
+      });
+
+      // Mobile view switcher
+      const btnMobEd = document.getElementById('btnMobileEditor');
+      const btnMobPr = document.getElementById('btnMobilePreview');
+      const editorPane = document.getElementById('editorPane');
+      const previewPane = document.getElementById('previewPane');
+
+      btnMobEd.addEventListener('click', () => {
+        editorPane.classList.remove('hidden');
+        previewPane.classList.add('hidden');
+        btnMobEd.className = 'flex-1 py-1.5 text-xs font-semibold rounded-md bg-white text-indigo-700 shadow-sm transition';
+        btnMobPr.className = 'flex-1 py-1.5 text-xs font-semibold rounded-md text-slate-600 transition';
+      });
+
+      btnMobPr.addEventListener('click', () => {
+        editorPane.classList.add('hidden');
+        previewPane.classList.remove('hidden');
+        btnMobPr.className = 'flex-1 py-1.5 text-xs font-semibold rounded-md bg-white text-indigo-700 shadow-sm transition';
+        btnMobEd.className = 'flex-1 py-1.5 text-xs font-semibold rounded-md text-slate-600 transition';
+      });
+
+      // Firm details inputs
+      document.getElementById('inpFirmName').addEventListener('input', (e) => { state.firm.name = e.target.value; renderAll(); });
+      document.getElementById('inpProprietor').addEventListener('input', (e) => { state.firm.proprietor = e.target.value; renderAll(); });
+      document.getElementById('inpStmtType').addEventListener('change', (e) => { state.firm.stmtType = e.target.value; renderAll(); });
+      document.getElementById('inpFY').addEventListener('input', (e) => { state.firm.fy = e.target.value; renderAll(); });
+      document.getElementById('inpAsOnDate').addEventListener('input', (e) => { state.firm.asOnDate = e.target.value; renderAll(); });
+      document.getElementById('inpPlace').addEventListener('input', (e) => { state.firm.place = e.target.value; renderAll(); });
+      document.getElementById('inpSignDate').addEventListener('input', (e) => { state.firm.signDate = e.target.value; renderAll(); });
+      document.getElementById('inpFootnotes').addEventListener('input', (e) => { state.firm.footnotes = e.target.value; renderAll(); });
+      document.getElementById('btnAutoNotes').addEventListener('click', generateDefaultNotes);
+
+      // P&L Mode Switch
+      document.getElementById('btnModeTarget').addEventListener('click', () => {
+        const f = computeFinancials();
+        state.pl.targetBusinessProfit = f.businessProfit;
+        state.pl.mode = 'target';
+        syncInputsFromState();
+        renderAll();
+      });
+
+      document.getElementById('btnModeManual').addEventListener('click', () => {
+        const f = computeFinancials();
+        state.pl.manualPurchases = f.purchases;
+        state.pl.mode = 'manual';
+        syncInputsFromState();
+        renderAll();
+      });
+
+      // P&L numeric inputs
+      document.getElementById('inpSales').addEventListener('input', (e) => { state.pl.sales = Number(e.target.value) || 0; renderAll(); });
+      document.getElementById('inpTargetProfit').addEventListener('input', (e) => { state.pl.targetBusinessProfit = Number(e.target.value) || 0; renderAll(); });
+      document.getElementById('inpManualPurchases').addEventListener('input', (e) => { state.pl.manualPurchases = Number(e.target.value) || 0; renderAll(); });
+      document.getElementById('inpOpeningStock').addEventListener('input', (e) => { state.pl.openingStock = Number(e.target.value) || 0; renderAll(); });
+      document.getElementById('inpClosingStock').addEventListener('input', (e) => { state.pl.closingStock = Number(e.target.value) || 0; renderAll(); });
+
+      // Dynamic Expenses
+      document.getElementById('btnAddExpense').addEventListener('click', () => {
+        state.pl.expenses.push({ id: 'e' + Date.now(), name: 'Other Expenses', amount: 0 });
+        renderExpensesEditor();
+        renderAll();
+      });
+
+      document.getElementById('expensesList').addEventListener('input', (e) => {
+        if (e.target.dataset.expName !== undefined) {
+          state.pl.expenses[e.target.dataset.expName].name = e.target.value;
+          renderAll();
+        } else if (e.target.dataset.expAmt !== undefined) {
+          state.pl.expenses[e.target.dataset.expAmt].amount = Number(e.target.value) || 0;
+          renderAll();
+        }
+      });
+
+      document.getElementById('expensesList').addEventListener('click', (e) => {
+        if (e.target.dataset.expDel !== undefined) {
+          state.pl.expenses.splice(Number(e.target.dataset.expDel), 1);
+          renderExpensesEditor();
+          renderAll();
+        }
+      });
+
+      // Dynamic Other Income
+      document.getElementById('btnAddOtherIncome').addEventListener('click', () => {
+        state.pl.otherIncome.push({ id: 'o' + Date.now(), name: 'Income from Other Sources', amount: 0 });
+        renderOtherIncomeEditor();
+        renderAll();
+      });
+
+      document.getElementById('otherIncomeList').addEventListener('input', (e) => {
+        if (e.target.dataset.incName !== undefined) {
+          state.pl.otherIncome[e.target.dataset.incName].name = e.target.value;
+          renderAll();
+        } else if (e.target.dataset.incAmt !== undefined) {
+          state.pl.otherIncome[e.target.dataset.incAmt].amount = Number(e.target.value) || 0;
+          renderAll();
+        }
+      });
+
+      document.getElementById('otherIncomeList').addEventListener('click', (e) => {
+        if (e.target.dataset.incDel !== undefined) {
+          state.pl.otherIncome.splice(Number(e.target.dataset.incDel), 1);
+          renderOtherIncomeEditor();
+          renderAll();
+        }
+      });
+
+      // Balance Sheet static inputs
+      document.getElementById('inpOpeningCapital').addEventListener('input', (e) => { state.bs.openingCapital = Number(e.target.value) || 0; renderAll(); });
+      document.getElementById('inpDrawings').addEventListener('input', (e) => { state.bs.drawings = Number(e.target.value) || 0; renderAll(); });
+      document.getElementById('inpCCLabel').addEventListener('input', (e) => { state.bs.ccLabel = e.target.value; renderAll(); });
+      document.getElementById('inpCCAmount').addEventListener('input', (e) => { state.bs.ccAmount = Number(e.target.value) || 0; renderAll(); });
+      document.getElementById('inpUnsecuredLoans').addEventListener('input', (e) => { state.bs.unsecuredLoans = Number(e.target.value) || 0; renderAll(); });
+      document.getElementById('inpCreditors').addEventListener('input', (e) => { state.bs.creditors = Number(e.target.value) || 0; renderAll(); });
+      document.getElementById('inpDeposits').addEventListener('input', (e) => { state.bs.deposits = Number(e.target.value) || 0; renderAll(); });
+      document.getElementById('inpDebtors').addEventListener('input', (e) => { state.bs.debtors = Number(e.target.value) || 0; renderAll(); });
+
+      document.getElementById('chkAutoCash').addEventListener('change', (e) => {
+        if (!e.target.checked) {
+          state.bs.manualCashBank = computeFinancials().cashBank;
+        }
+        state.bs.autoBalanceCash = e.target.checked;
+        renderAll();
+      });
+
+      document.getElementById('inpCashBank').addEventListener('input', (e) => {
+        if (!state.bs.autoBalanceCash) {
+          state.bs.manualCashBank = Number(e.target.value) || 0;
+          renderAll();
+        }
+      });
+
+      // Custom Liabilities
+      document.getElementById('btnAddLiability').addEventListener('click', () => {
+        state.bs.customLiabilities.push({ id: 'l' + Date.now(), name: 'Expenses Payable', amount: 0 });
+        renderCustomLiabilitiesEditor();
+        renderAll();
+      });
+
+      document.getElementById('customLiabilitiesList').addEventListener('input', (e) => {
+        if (e.target.dataset.liabName !== undefined) {
+          state.bs.customLiabilities[e.target.dataset.liabName].name = e.target.value;
+          renderAll();
+        } else if (e.target.dataset.liabAmt !== undefined) {
+          state.bs.customLiabilities[e.target.dataset.liabAmt].amount = Number(e.target.value) || 0;
+          renderAll();
+        }
+      });
+
+      document.getElementById('customLiabilitiesList').addEventListener('click', (e) => {
+        if (e.target.dataset.liabDel !== undefined) {
+          state.bs.customLiabilities.splice(Number(e.target.dataset.liabDel), 1);
+          renderCustomLiabilitiesEditor();
+          renderAll();
+        }
+      });
+
+      // Dynamic Fixed Assets
+      document.getElementById('btnAddFixedAsset').addEventListener('click', () => {
+        state.bs.fixedAssets.push({ id: 'fa' + Date.now(), name: 'Computer / Equipment', opening: 0, depRate: 15 });
+        renderFixedAssetsEditor();
+        renderAll();
+      });
+
+      document.getElementById('fixedAssetsList').addEventListener('input', (e) => {
+        if (e.target.dataset.faName !== undefined) {
+          state.bs.fixedAssets[e.target.dataset.faName].name = e.target.value;
+          renderAll();
+        } else if (e.target.dataset.faOpen !== undefined) {
+          state.bs.fixedAssets[e.target.dataset.faOpen].opening = Number(e.target.value) || 0;
+          renderFixedAssetsEditor();
+          renderAll();
+        } else if (e.target.dataset.faRate !== undefined) {
+          state.bs.fixedAssets[e.target.dataset.faRate].depRate = Number(e.target.value) || 0;
+          renderFixedAssetsEditor();
+          renderAll();
+        }
+      });
+
+      document.getElementById('fixedAssetsList').addEventListener('click', (e) => {
+        if (e.target.dataset.faDel !== undefined) {
+          state.bs.fixedAssets.splice(Number(e.target.dataset.faDel), 1);
+          renderFixedAssetsEditor();
+          renderAll();
+        }
+      });
+
+      // Top Toolbar Buttons
+      document.getElementById('btnPrintPdf').addEventListener('click', () => {
+        window.print();
+      });
+
+      document.getElementById('btnSaveJson').addEventListener('click', saveClientJson);
+
+      document.getElementById('btnLoadJson').addEventListener('click', () => {
+        document.getElementById('fileInputJson').value = '';
+        document.getElementById('fileInputJson').click();
+      });
+
+      document.getElementById('fileInputJson').addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          loadClientJson(e.target.files[0]);
+        }
+      });
+
+      document.getElementById('btnResetSample').addEventListener('click', () => {
+        state = getSampleState();
+        syncInputsFromState();
+        renderAll();
+        showToast('Sample data loaded');
+      });
+
+      // Carry Forward Modal
+      document.getElementById('btnOpenCarryForward').addEventListener('click', openCarryForwardModal);
+      document.getElementById('btnCloseCF').addEventListener('click', closeCarryForwardModal);
+      document.getElementById('btnCancelCF').addEventListener('click', closeCarryForwardModal);
+      document.getElementById('btnApplyCF').addEventListener('click', applyCarryForward);
+    }
+
+    // ==================== INITIALIZE APP ====================
+    window.addEventListener('DOMContentLoaded', () => {
+      syncInputsFromState();
+      renderAll();
+      bindEvents();
+    });
+  </script>
+
+  <!-- Native Android APK Bridge & Offline Fallback -->
+  <style id="offline-fallback-css">
+    @media screen {
+      body { margin: 0; background: #f1f5f9; color: #0f172a; }
+      input, select, textarea { box-sizing: border-box; }
+    }
+  </style>
+  <script>
+    (function () {
+      var STORAGE_KEY = 'bs_pl_android_apk_autosave_v1';
+
+      // Override window.print to invoke native Android PrintManager (A4 PDF)
+      var origPrint = window.print;
+      window.print = function () {
+        if (window.AndroidBridge && typeof window.AndroidBridge.printDocument === 'function') {
+          var firmEl = document.getElementById('inpFirmName');
+          var fyEl = document.getElementById('inpFY');
+          var jobName = ((firmEl && firmEl.value) ? firmEl.value : 'BS_PL_Statement') + '_' + ((fyEl && fyEl.value) ? fyEl.value : 'FY');
+          window.AndroidBridge.printDocument(jobName.replace(/[^a-zA-Z0-9_-]+/g, '_'));
+        } else {
+          origPrint.call(window);
+        }
+      };
+
+      // Persist state automatically offline in Android WebView
+      window.addEventListener('DOMContentLoaded', function () {
+        try {
+          var saved = localStorage.getItem(STORAGE_KEY);
+          if (saved && typeof state !== 'undefined' && typeof syncInputsFromState === 'function') {
+            var parsed = JSON.parse(saved);
+            if (parsed && parsed.firm && parsed.pl && parsed.bs) {
+              state = parsed;
+              syncInputsFromState();
+              renderAll();
+            }
+          }
+        } catch (e) {}
+
+        // Hook save button for native Android Downloads export
+        var btnSave = document.getElementById('btnSaveJson');
+        if (btnSave && window.AndroidBridge && typeof window.AndroidBridge.saveJsonFile === 'function') {
+          btnSave.addEventListener('click', function (ev) {
+            try {
+              ev.stopImmediatePropagation();
+              var safeName = (state.firm.name || 'client').replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '');
+              var fileName = safeName + '_' + (state.firm.fy || 'FY') + '_' + state.firm.stmtType + '.json';
+              window.AndroidBridge.saveJsonFile(fileName, JSON.stringify(state, null, 2));
+              if (typeof showToast === 'function') showToast('Saved to Downloads: ' + fileName);
+            } catch (err) {}
+          }, true);
+        }
+
+        // Periodic + input autosave
+        var saveDraft = function () {
+          try {
+            if (typeof state !== 'undefined') {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            }
+          } catch (e) {}
+        };
+        document.addEventListener('input', saveDraft, true);
+        document.addEventListener('change', saveDraft, true);
+        document.addEventListener('click', function () { setTimeout(saveDraft, 120); }, true);
+      });
+    })();
+  </script>
+
+</body>
+</html>
